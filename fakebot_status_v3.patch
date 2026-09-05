@@ -1,42 +1,44 @@
-diff --git a/rehlds/engine/host_cmd.cpp b/rehlds/engine/host_cmd.cpp
-index ddc98b0..da226f2 100644
 --- a/rehlds/engine/host_cmd.cpp
 +++ b/rehlds/engine/host_cmd.cpp
-@@ -629,11 +629,16 @@ void Host_Status_f(void)
+@@ -629,9 +629,18 @@
  				minutes %= 60;
  		}
  
--		// Fake clients already have a Steam ID in network_userid. Use the
--		// internal formatter directly so status does not depend on YaPB's
--		// SV_GetIDString hook or its returned buffer.
-+		char fakeBotId[32];
- 		if (client->fakeclient)
--			val = SV_GetIDString_internal(&client->network_userid);
+-		if (!client->fakeclient)
++		if (client->fakeclient)
 +		{
-+			// Give fake clients a valid-looking Steam2 ID in status output.
-+			// YaPB's hook-return path produced corrupted strings on this setup,
-+			// while the engine's unauthenticated bot IDs are only 0/1.
++			// ReHLDS creates unauthenticated fake clients with internal Steam IDs
++			// such as 0/1. Give status a deterministic Steam2-formatted ID
++			// without calling YaPB's ID-string hook.
++			char fakeBotId[32];
 +			unsigned int botNumber = 100000000u + (unsigned int)client->userid;
 +			Q_snprintf(fakeBotId, sizeof(fakeBotId), "STEAM_0:%u:%u", botNumber & 1u, botNumber >> 1);
 +			val = fakeBotId;
 +		}
- 		else
++		else
  			val = SV_GetClientIDString(client);
+-		else val = "BOT";
  
-@@ -749,10 +754,13 @@ void Host_Status_Formatted_f(void)
+ 		Host_Status_Printf(conprint, log, "#%2i %8s %i %s", j + 1, va("\"%s\"", client->name), client->userid, val);
+ 		if (client->proxy)
+@@ -745,13 +754,15 @@
  			szRemoteAddr = NET_AdrToString(client->netchan.remote_address);
  		else szRemoteAddr = "";
  
--		// Fake clients already have a Steam ID in network_userid. Use the
--		// internal formatter directly to avoid YaPB hook-return-buffer issues.
-+		char fakeBotId[32];
+-#ifdef REHLDS_FIXES
+-		//TODO: I think it would be better if do the formatting for fakeclient as in Host_Status_f (in the original it there is no)
  		if (client->fakeclient)
--			szIDString = SV_GetIDString_internal(&client->network_userid);
+-			szIDString = "BOT";
 +		{
++			char fakeBotId[32];
 +			unsigned int botNumber = 100000000u + (unsigned int)client->userid;
 +			Q_snprintf(fakeBotId, sizeof(fakeBotId), "STEAM_0:%u:%u", botNumber & 1u, botNumber >> 1);
 +			szIDString = fakeBotId;
 +		}
  		else
- 			szIDString = SV_GetClientIDString(client);
+-#endif // REHLDS_FIXES
+-		szIDString = SV_GetClientIDString(client);
++			szIDString = SV_GetClientIDString(client);
  		Host_Status_Printf(conprint, log, "%-2.2s\t%-9.9s\t%-7.7s\t%-20.20s\t%-4.4s\t%-8.8s\t%-4.4s\t%-4.4s\t%-21.21s\n",
+ 			va("%-2i", j + 1),va("\"%s\"", client->name),va("%-7i", client->userid),szIDString,
+ 			va("%-4i", (int)client->edict->v.frags),sz,va("%-4i", SV_CalcPing(client)),va("%-4i", (int)client->packet_loss),szRemoteAddr);
