@@ -1,1 +1,45 @@
+name: Build patched ReHLDS i386
 
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout helper files
+        uses: actions/checkout@v4
+
+      - name: Install 32-bit build dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-multilib g++-multilib libc6-dev libc6-dev-i386 cmake git
+
+      - name: Download exact ReHLDS 3.14.0.857
+        run: |
+          git clone --depth 1 --branch 3.14.0.857 https://github.com/rehlds/ReHLDS.git rehlds
+          cd rehlds
+          test "$(git rev-parse HEAD)" = "89958d348ea617227a4e4360b76900423527bd9e"
+
+      - name: Apply FakeBot status patch
+        run: |
+          cd rehlds
+          git apply --check ../fakebot_status.patch
+          git apply ../fakebot_status.patch
+
+      - name: Build Linux i386 engine
+        run: |
+          cd rehlds
+          chmod +x build.sh
+          ./build.sh --compiler=gcc --jobs=$(nproc)
+          file build/rehlds/engine_i486.so
+          test -f build/rehlds/engine_i486.so
+
+      - name: Upload engine_i486.so
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine_i486-fakebot-status-3.14.0.857
+          path: rehlds/build/rehlds/engine_i486.so
+          if-no-files-found: error
