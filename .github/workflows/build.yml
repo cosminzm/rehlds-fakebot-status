@@ -26,8 +26,8 @@ jobs:
       - name: Apply FakeBot status patch
         run: |
           cd rehlds
-         git apply --check ../fakebot_status_v2.patch
-         git apply ../fakebot_status_v2.patch
+          git apply --check ../fakebot_status_v2.patch
+          git apply ../fakebot_status_v2.patch
 
       - name: Build Linux i386 engine
         run: |
