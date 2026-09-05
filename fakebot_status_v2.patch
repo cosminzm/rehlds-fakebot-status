@@ -1,0 +1,56 @@
+--- a/rehlds/engine/host_cmd.cpp
++++ b/rehlds/engine/host_cmd.cpp
+@@ -624,19 +624,23 @@
+ 		if (minutes)
+ 		{
+ 			seconds %= 60;
+ 			hours = minutes / 60;
+ 			if (hours)
+ 				minutes %= 60;
+ 		}
+ 
+-		if (!client->fakeclient)
++		// Fake clients already have a Steam ID in network_userid. Use the
++		// internal formatter directly so status does not depend on YaPB's
++		// SV_GetIDString hook or its returned buffer.
++		if (client->fakeclient)
++			val = SV_GetIDString_internal(&client->network_userid);
++		else
+ 			val = SV_GetClientIDString(client);
+-		else val = "BOT";
+ 
+ 		Host_Status_Printf(conprint, log, "#%2i %8s %i %s", j + 1, va("\"%s\"", client->name), client->userid, val);
+ 		if (client->proxy)
+ 		{
+ 			const char *userInfo = Info_ValueForKey(client->userinfo, "hspecs");
+ 			if (Q_strlen(userInfo))
+ 				hltv_specs = Q_atoi(userInfo);
+ 
+@@ -740,23 +744,22 @@
+ 			Q_snprintf(sz, sizeof(sz), "%-2i:%02i:%02i", hours, minutes % 60, seconds % 60);
+ 		else
+ 			Q_snprintf(sz, sizeof(sz), "%02i:%02i", minutes, seconds % 60);
+ 
+ 		if (conprint)
+ 			szRemoteAddr = NET_AdrToString(client->netchan.remote_address);
+ 		else szRemoteAddr = "";
+ 
+-#ifdef REHLDS_FIXES
+-		//TODO: I think it would be better if do the formatting for fakeclient as in Host_Status_f (in the original it there is no)
++		// Fake clients already have a Steam ID in network_userid. Use the
++		// internal formatter directly to avoid YaPB hook-return-buffer issues.
+ 		if (client->fakeclient)
+-			szIDString = "BOT";
++			szIDString = SV_GetIDString_internal(&client->network_userid);
+ 		else
+-#endif // REHLDS_FIXES
+-		szIDString = SV_GetClientIDString(client);
++			szIDString = SV_GetClientIDString(client);
+ 		Host_Status_Printf(conprint, log, "%-2.2s\t%-9.9s\t%-7.7s\t%-20.20s\t%-4.4s\t%-8.8s\t%-4.4s\t%-4.4s\t%-21.21s\n",
+ 			va("%-2i", j + 1),va("\"%s\"", client->name),va("%-7i", client->userid),szIDString,
+ 			va("%-4i", (int)client->edict->v.frags),sz,va("%-4i", SV_CalcPing(client)),va("%-4i", (int)client->packet_loss),szRemoteAddr);
+ 	}
+ 	Host_Status_Printf(conprint, log, "%i users\n", nClients);
+ }
+ 
+ // Sets client to godmode
