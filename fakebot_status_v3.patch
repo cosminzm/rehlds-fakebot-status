@@ -1,0 +1,42 @@
+diff --git a/rehlds/engine/host_cmd.cpp b/rehlds/engine/host_cmd.cpp
+index ddc98b0..da226f2 100644
+--- a/rehlds/engine/host_cmd.cpp
++++ b/rehlds/engine/host_cmd.cpp
+@@ -629,11 +629,16 @@ void Host_Status_f(void)
+ 				minutes %= 60;
+ 		}
+ 
+-		// Fake clients already have a Steam ID in network_userid. Use the
+-		// internal formatter directly so status does not depend on YaPB's
+-		// SV_GetIDString hook or its returned buffer.
++		char fakeBotId[32];
+ 		if (client->fakeclient)
+-			val = SV_GetIDString_internal(&client->network_userid);
++		{
++			// Give fake clients a valid-looking Steam2 ID in status output.
++			// YaPB's hook-return path produced corrupted strings on this setup,
++			// while the engine's unauthenticated bot IDs are only 0/1.
++			unsigned int botNumber = 100000000u + (unsigned int)client->userid;
++			Q_snprintf(fakeBotId, sizeof(fakeBotId), "STEAM_0:%u:%u", botNumber & 1u, botNumber >> 1);
++			val = fakeBotId;
++		}
+ 		else
+ 			val = SV_GetClientIDString(client);
+ 
+@@ -749,10 +754,13 @@ void Host_Status_Formatted_f(void)
+ 			szRemoteAddr = NET_AdrToString(client->netchan.remote_address);
+ 		else szRemoteAddr = "";
+ 
+-		// Fake clients already have a Steam ID in network_userid. Use the
+-		// internal formatter directly to avoid YaPB hook-return-buffer issues.
++		char fakeBotId[32];
+ 		if (client->fakeclient)
+-			szIDString = SV_GetIDString_internal(&client->network_userid);
++		{
++			unsigned int botNumber = 100000000u + (unsigned int)client->userid;
++			Q_snprintf(fakeBotId, sizeof(fakeBotId), "STEAM_0:%u:%u", botNumber & 1u, botNumber >> 1);
++			szIDString = fakeBotId;
++		}
+ 		else
+ 			szIDString = SV_GetClientIDString(client);
+ 		Host_Status_Printf(conprint, log, "%-2.2s\t%-9.9s\t%-7.7s\t%-20.20s\t%-4.4s\t%-8.8s\t%-4.4s\t%-4.4s\t%-21.21s\n",
