@@ -11,37 +11,88 @@ jobs:
       - name: Checkout helper files
         uses: actions/checkout@v4
 
-      - name: Install 32-bit build dependencies
+      - name: Build ReHLDS inside Ubuntu 20.04
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y build-essential gcc-multilib g++-multilib libc6-dev libc6-dev-i386 cmake git
+          docker run --rm \
+            -v "$PWD:/work" \
+            -w /work \
+            ubuntu:20.04 \
+            bash -c '
+              set -e
 
-      - name: Download exact ReHLDS 3.14.0.857
+              echo "=== Configure Ubuntu 20.04 repositories ==="
+
+              sed -i \
+                -e "s|http://archive.ubuntu.com/ubuntu|http://old-releases.ubuntu.com/ubuntu|g" \
+                -e "s|http://security.ubuntu.com/ubuntu|http://old-releases.ubuntu.com/ubuntu|g" \
+                /etc/apt/sources.list
+
+              apt-get update
+
+              echo "=== Install build dependencies ==="
+
+              DEBIAN_FRONTEND=noninteractive apt-get install -y \
+                build-essential \
+                gcc-multilib \
+                g++-multilib \
+                libc6-dev \
+                libc6-dev-i386 \
+                cmake \
+                git \
+                ca-certificates
+
+              echo "=== Download exact ReHLDS 3.14.0.857 ==="
+
+              rm -rf /work/rehlds
+
+              git clone \
+                --depth 1 \
+                --branch 3.14.0.857 \
+                https://github.com/rehlds/ReHLDS.git \
+                /work/rehlds
+
+              cd /work/rehlds
+
+              test "$(git rev-parse HEAD)" = \
+                "89958d348ea617227a4e4360b76900423527bd9e"
+
+              echo "=== Apply FakeBot Status patch ==="
+
+              git apply --check --ignore-whitespace \
+                /work/fakebot_status_v3.patch
+
+              git apply --ignore-whitespace \
+                /work/fakebot_status_v3.patch
+
+              echo "=== Build Linux i386 engine ==="
+
+              chmod +x build.sh
+
+              ./build.sh \
+                --compiler=gcc \
+                --jobs=$(nproc)
+
+              echo "=== Verify engine ==="
+
+              file build/rehlds/engine_i486.so
+
+              test -f build/rehlds/engine_i486.so
+
+              echo "=== GLIBC requirements ==="
+
+              strings build/rehlds/engine_i486.so \
+                | grep -o "GLIBC_[0-9.]*" \
+                | sort -Vu
+
+              echo "=== Build complete ==="
+            '
+
+      - name: Check generated engine
         run: |
-          git clone --depth 1 --branch 3.14.0.857 https://github.com/rehlds/ReHLDS.git rehlds
-          cd rehlds
-          test "$(git rev-parse HEAD)" = "89958d348ea617227a4e4360b76900423527bd9e"
+          file rehlds/build/rehlds/engine_i486.so
+          test -f rehlds/build/rehlds/engine_i486.so
 
-      - name: Apply FakeBot status patch
-        run: |
-          cd rehlds
-          git apply --check --ignore-whitespace ../fakebot_status_v3.patch
-          git apply --ignore-whitespace ../fakebot_status_v3.patch
-
-      - name: Build Linux i386 engine
-        run: |
-          cd rehlds
-          chmod +x build.sh
-          ./build.sh --compiler=gcc --jobs=$(nproc)
-          file build/rehlds/engine_i486.so
-          test -f build/rehlds/engine_i486.so
-
-      - name: Check GLIBC requirements
-        run: |
-          strings build/rehlds/engine_i486.so | grep -o 'GLIBC_[0-9.]*' | sort -Vu
-
-      - name: Upload engine_i486.so
+      - name: Upload Legacy Compatible engine
         uses: actions/upload-artifact@v4
         with:
           name: engine_i486-fakebot-status-3.14.0.857-legacy
