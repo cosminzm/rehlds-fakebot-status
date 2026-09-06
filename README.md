@@ -90,17 +90,13 @@ Ready-to-use compiled engines are available in the **Releases** section.
 
 ### Standard Build
 
-```text
-engine_i486.so
-```
+`engine_i486.so`
 
 Recommended for servers running a modern Linux environment.
 
 ### Legacy Build
 
-```text
-engine_i486-legacy.so
-```
+`engine_i486-legacy.so`
 
 The legacy build is compiled inside **Ubuntu 20.04 using GLIBC 2.31** and is intended for older Linux hosting environments.
 
@@ -112,6 +108,10 @@ Unable to load engine, image is corrupt.
 ```
 
 try the **legacy build**.
+
+### ⚠️ Important
+
+If you download `engine_i486-legacy.so`, you **must rename it to `engine_i486.so`** before installing it on your server.
 
 ➡️ **[Download the latest release](../../releases/latest)**
 
@@ -155,15 +155,11 @@ The project uses **GitHub Actions** to automatically compile the modified ReHLDS
 
 The legacy artifact is named:
 
-```text
-engine_i486-fakebot-status-3.14.0.857-legacy
-```
+`engine_i486-fakebot-status-3.14.0.857-legacy`
 
 Inside the archive you will find:
 
-```text
-engine_i486.so
-```
+`engine_i486.so`
 
 ---
 
@@ -171,21 +167,38 @@ engine_i486.so
 
 > ⚠️ **Always make a backup of your original `engine_i486.so` before replacing it.**
 
-### Installation
+### Standard Build
+
+If you download:
+
+`engine_i486.so`
+
+simply replace your existing `engine_i486.so` with the downloaded file.
+
+### Legacy Build
+
+If you download:
+
+`engine_i486-legacy.so`
+
+you **must rename it to:**
+
+`engine_i486.so`
+
+before replacing the original engine.
+
+### Installation Steps
 
 1. Stop your Counter-Strike 1.6 server.
 2. Locate the existing `engine_i486.so`.
 3. Make a backup of the original file.
-4. Choose the appropriate build from the Releases section.
-5. Replace the original `engine_i486.so` with the downloaded build.
-6. Keep your existing YaPB configuration unchanged.
-7. Start the server.
-8. Open the server console.
-9. Run:
-
-```text
-status
-```
+4. Download the appropriate build from the Releases section.
+5. If using the legacy build, rename `engine_i486-legacy.so` to `engine_i486.so`.
+6. Replace the original `engine_i486.so`.
+7. Keep your existing YaPB configuration unchanged.
+8. Start the server.
+9. Open the server console.
+10. Run `status`.
 
 ### Expected Result
 
@@ -291,10 +304,8 @@ Stable versions are published through the GitHub **Releases** section.
 
 Each release can include:
 
-```text
-engine_i486.so
-engine_i486-legacy.so
-```
+- `engine_i486.so` — Standard build
+- `engine_i486-legacy.so` — Legacy-compatible build
 
 For development or testing builds, use the GitHub Actions artifacts.
 
