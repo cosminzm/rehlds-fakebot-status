@@ -1,7 +1,9 @@
 # 🎮 ReHLDS FakeBot Status
 
 ### Show YaPB bots with unique Steam2-style IDs in `status`
-
+[![Build ReHLDS](https://github.com/cosminzm/rehlds-fakebot-status/actions/workflows/build.yml/badge.svg)](https://github.com/cosminzm/rehlds-fakebot-status/actions/workflows/build.yml)
+[![GitHub release](https://img.shields.io/github/v/release/cosminzm/rehlds-fakebot-status)](https://github.com/cosminzm/rehlds-fakebot-status/releases)
+[![GitHub stars](https://img.shields.io/github/stars/cosminzm/rehlds-fakebot-status)](https://github.com/cosminzm/rehlds-fakebot-status/stargazers)
 A custom Linux i386 build of **ReHLDS 3.14.0.857** that modifies the `status` output so YaPB fake clients are displayed with randomly generated Steam2-style IDs instead of `BOT`.
 
 ---
