@@ -23,9 +23,9 @@ jobs:
               echo "=== Configure Ubuntu 20.04 repositories ==="
 
               cat > /etc/apt/sources.list <<EOF
-          deb http://old-releases.ubuntu.com/ubuntu/ focal main restricted universe multiverse
-          deb http://old-releases.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse
-          deb http://old-releases.ubuntu.com/ubuntu/ focal-security main restricted universe multiverse
+          deb http://archive.ubuntu.com/ubuntu focal main restricted universe multiverse
+          deb http://archive.ubuntu.com/ubuntu focal-updates main restricted universe multiverse
+          deb http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse
           EOF
 
               apt-get update
@@ -76,7 +76,6 @@ jobs:
               echo "=== Verify engine ==="
 
               file build/rehlds/engine_i486.so
-
               test -f build/rehlds/engine_i486.so
 
               echo "=== GLIBC requirements ==="
