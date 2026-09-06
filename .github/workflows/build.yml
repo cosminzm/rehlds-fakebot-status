@@ -40,7 +40,8 @@ jobs:
                 libc6-dev-i386 \
                 cmake \
                 git \
-                ca-certificates
+                ca-certificates \
+                file
 
               echo "=== Download exact ReHLDS 3.14.0.857 ==="
 
@@ -76,6 +77,7 @@ jobs:
               echo "=== Verify engine ==="
 
               file build/rehlds/engine_i486.so
+
               test -f build/rehlds/engine_i486.so
 
               echo "=== GLIBC requirements ==="
