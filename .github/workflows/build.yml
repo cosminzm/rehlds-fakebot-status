@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout helper files
@@ -37,9 +37,13 @@ jobs:
           file build/rehlds/engine_i486.so
           test -f build/rehlds/engine_i486.so
 
+      - name: Check GLIBC requirements
+        run: |
+          strings build/rehlds/engine_i486.so | grep -o 'GLIBC_[0-9.]*' | sort -Vu
+
       - name: Upload engine_i486.so
         uses: actions/upload-artifact@v4
         with:
-          name: engine_i486-fakebot-status-3.14.0.857
+          name: engine_i486-fakebot-status-3.14.0.857-glibc231
           path: rehlds/build/rehlds/engine_i486.so
           if-no-files-found: error
