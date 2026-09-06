@@ -1,27 +1,59 @@
---- a/rehlds/engine/host_cmd.cpp
-+++ b/rehlds/engine/host_cmd.cpp
-@@ -629,9 +629,18 @@
+--- rehlds_orig/ReHLDS-3.14.0.857/rehlds/engine/host_cmd.cpp
++++ rehlds_v4/rehlds/engine/host_cmd.cpp
+@@ -47,6 +47,39 @@
+ 
+ SV_SAVEGAMECOMMENT_FUNC g_pSaveGameCommentFunc = &Host_SavegameComment;
+ 
++// Cache a random Steam2-formatted ID for each fake client slot so the
++// value stays stable during a connection but changes when the slot gets
++// a new userid. These IDs are for status display only.
++static client_t *g_FakeBotStatusClients[MAX_CLIENTS] = {};
++static int g_FakeBotStatusUserids[MAX_CLIENTS] = {};
++static char g_FakeBotStatusIds[MAX_CLIENTS][32] = {};
++
++static const char *Host_GetFakeBotStatusId(client_t *client)
++{
++	int slot = (int)(client - g_psvs.clients);
++	if (slot < 0 || slot >= MAX_CLIENTS)
++		return "STEAM_0:0:1";
++
++	if (g_FakeBotStatusClients[slot] != client || g_FakeBotStatusUserids[slot] != client->userid)
++	{
++		unsigned int authServer = (unsigned int)RandomLong(0, 1);
++		unsigned int accountId;
++
++		do
++		{
++			accountId = (unsigned int)RandomLong(100000000, 0x7FFFFFFE);
++		} while (accountId == 0);
++
++		Q_snprintf(g_FakeBotStatusIds[slot], sizeof(g_FakeBotStatusIds[slot]),
++			"STEAM_0:%u:%u", authServer, accountId);
++
++		g_FakeBotStatusClients[slot] = client;
++		g_FakeBotStatusUserids[slot] = client->userid;
++	}
++
++	return g_FakeBotStatusIds[slot];
++}
++
+ cvar_t voice_recordtofile = { "voice_recordtofile", "0", 0, 0.0f, NULL };
+ cvar_t voice_inputfromfile = { "voice_inputfromfile", "0", 0, 0.0f, NULL };
+ cvar_t gHostMap = { "HostMap", "C1A0", 0, 0.0f, NULL };
+@@ -629,9 +662,10 @@
  				minutes %= 60;
  		}
  
 -		if (!client->fakeclient)
 +		if (client->fakeclient)
-+		{
-+			// ReHLDS creates unauthenticated fake clients with internal Steam IDs
-+			// such as 0/1. Give status a deterministic Steam2-formatted ID
-+			// without calling YaPB's ID-string hook.
-+			char fakeBotId[32];
-+			unsigned int botNumber = 100000000u + (unsigned int)client->userid;
-+			Q_snprintf(fakeBotId, sizeof(fakeBotId), "STEAM_0:%u:%u", botNumber & 1u, botNumber >> 1);
-+			val = fakeBotId;
-+		}
++			val = Host_GetFakeBotStatusId(client);
 +		else
  			val = SV_GetClientIDString(client);
 -		else val = "BOT";
  
  		Host_Status_Printf(conprint, log, "#%2i %8s %i %s", j + 1, va("\"%s\"", client->name), client->userid, val);
  		if (client->proxy)
-@@ -745,13 +754,15 @@
+@@ -745,13 +779,10 @@
  			szRemoteAddr = NET_AdrToString(client->netchan.remote_address);
  		else szRemoteAddr = "";
  
@@ -29,12 +61,7 @@
 -		//TODO: I think it would be better if do the formatting for fakeclient as in Host_Status_f (in the original it there is no)
  		if (client->fakeclient)
 -			szIDString = "BOT";
-+		{
-+			char fakeBotId[32];
-+			unsigned int botNumber = 100000000u + (unsigned int)client->userid;
-+			Q_snprintf(fakeBotId, sizeof(fakeBotId), "STEAM_0:%u:%u", botNumber & 1u, botNumber >> 1);
-+			szIDString = fakeBotId;
-+		}
++			szIDString = Host_GetFakeBotStatusId(client);
  		else
 -#endif // REHLDS_FIXES
 -		szIDString = SV_GetClientIDString(client);
